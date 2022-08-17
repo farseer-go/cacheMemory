@@ -26,10 +26,6 @@ type CacheKey struct {
 	UniqueField string
 	// Redis配置名称
 	RedisConfigName string
-	//// 缓存的数据Item Type
-	//ListType reflect.Type
-	//// 缓存的数据Item Type
-	//ItemType reflect.Type
 	// 获取缓存实现
 	Cache ICache
 }
