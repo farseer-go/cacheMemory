@@ -28,6 +28,8 @@ type CacheKey struct {
 	RedisConfigName string
 	// 获取缓存实现
 	Cache ICache
+	// ItemType
+	ItemType reflect.Type
 }
 
 // getUniqueId 获取唯一字段数据
