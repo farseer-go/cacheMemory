@@ -32,8 +32,8 @@ type CacheKey struct {
 	ItemType reflect.Type
 }
 
-// getUniqueId 获取唯一字段数据
-func (receiver CacheKey) getUniqueId(item any) (T string) {
+// GetUniqueId 获取唯一字段数据
+func (receiver CacheKey) GetUniqueId(item any) (T string) {
 	val := reflect.ValueOf(item).FieldByName(receiver.UniqueField).Interface()
 	return parse.Convert(val, "")
 }

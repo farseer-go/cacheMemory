@@ -35,7 +35,7 @@ func (r cacheInMemory) Get(cacheKey CacheKey) collections.ListAny {
 func (r cacheInMemory) GetItem(cacheKey CacheKey, cacheId string) any {
 	lst := r.Get(cacheKey)
 	for _, item := range lst.ToArray() {
-		id := cacheKey.getUniqueId(item)
+		id := cacheKey.GetUniqueId(item)
 		if cacheId == id {
 			return item
 		}
@@ -69,10 +69,10 @@ func (r cacheInMemory) SaveItem(cacheKey CacheKey, newVal any) {
 		list.Clear()
 	} else {
 		// 从新对象中，获取唯一标识
-		newValDataKey := cacheKey.getUniqueId(newVal)
+		newValDataKey := cacheKey.GetUniqueId(newVal)
 		for index := 0; index < list.Count(); index++ {
 			// 从当前缓存item中，获取唯一标识
-			itemDataKey := cacheKey.getUniqueId(list.Index(index))
+			itemDataKey := cacheKey.GetUniqueId(list.Index(index))
 			// 找到了
 			if itemDataKey == newValDataKey {
 				list.Set(index, newVal)
@@ -90,7 +90,7 @@ func (r cacheInMemory) Remove(cacheKey CacheKey, cacheId string) {
 	if list.Count() == 0 {
 		return
 	}
-	list.RemoveAll(func(item any) bool { return cacheKey.getUniqueId(item) == cacheId })
+	list.RemoveAll(func(item any) bool { return cacheKey.GetUniqueId(item) == cacheId })
 	// 保存
 	r.Set(cacheKey, list)
 }
@@ -115,7 +115,7 @@ func (r cacheInMemory) ExistsItem(cacheKey CacheKey, cacheId string) bool {
 	}
 	for index := 0; index < list.Count(); index++ {
 		// 从当前缓存item中，获取唯一标识
-		itemDataKey := cacheKey.getUniqueId(list.Index(index))
+		itemDataKey := cacheKey.GetUniqueId(list.Index(index))
 		// 找到了
 		if itemDataKey == cacheId {
 			return true
