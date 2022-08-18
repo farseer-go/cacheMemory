@@ -6,11 +6,11 @@
   * func
       * GetCacheManage （获取缓存对象）
       * SetProfilesInMemory （设置内存缓存（集合））
+      * SetSingleProfilesInMemory （设置内存缓存（单个对象））
       * SetProfilesInRedis （设置Redis缓存（集合））
-      * SetProfilesInMemoryAndRedis （设置内存-Redis缓存（集合））
-      * SetSingleProfilesInMemory （设置内存缓存（缓存单个对象））
-      * SetSingleProfilesInRedis （设置Redis缓存（缓存单个对象））
-      * SetSingleProfilesInMemoryAndRedis （设置内存-Redis缓存（缓存单个对象））
+      * SetSingleProfilesInRedis （设置Redis缓存（单个对象））
+      * SetProfilesInMemoryAndRedis （设置内存、Redis缓存（集合））
+      * SetSingleProfilesInMemoryAndRedis （设置内存、Redis缓存（单个对象））
   * struct
     * CacheManage（缓存对象）
       * Get（获取缓存数据）
