@@ -1,6 +1,7 @@
 package memoryCache
 
 import (
+	"github.com/farseer-go/cache"
 	"github.com/farseer-go/collections"
 	"time"
 )
@@ -19,11 +20,11 @@ type cacheValue struct {
 	ttl int64
 }
 
-func newCacheInMemory() ICache {
+func newCacheInMemory() cache.ICache {
 	return cacheInMemory{}
 }
 
-func (r cacheInMemory) Get(cacheKey CacheKey) collections.ListAny {
+func (r cacheInMemory) Get(cacheKey cache.CacheKey) collections.ListAny {
 	var defValue collections.ListAny
 	value, ok := localCache[cacheKey.Key]
 	if !ok {
@@ -32,7 +33,7 @@ func (r cacheInMemory) Get(cacheKey CacheKey) collections.ListAny {
 	return value.data.(collections.ListAny)
 }
 
-func (r cacheInMemory) GetItem(cacheKey CacheKey, cacheId string) any {
+func (r cacheInMemory) GetItem(cacheKey cache.CacheKey, cacheId string) any {
 	lst := r.Get(cacheKey)
 	for _, item := range lst.ToArray() {
 		id := cacheKey.GetUniqueId(item)
@@ -43,7 +44,7 @@ func (r cacheInMemory) GetItem(cacheKey CacheKey, cacheId string) any {
 	return nil
 }
 
-func (r cacheInMemory) Set(cacheKey CacheKey, val collections.ListAny) {
+func (r cacheInMemory) Set(cacheKey cache.CacheKey, val collections.ListAny) {
 	localCache[cacheKey.Key] = cacheValue{
 		data: val,
 	}
@@ -58,7 +59,7 @@ func (r cacheInMemory) Set(cacheKey CacheKey, val collections.ListAny) {
 	}
 }
 
-func (r cacheInMemory) SaveItem(cacheKey CacheKey, newVal any) {
+func (r cacheInMemory) SaveItem(cacheKey cache.CacheKey, newVal any) {
 	var list = r.Get(cacheKey)
 	if list.Count() == 0 {
 		return
@@ -85,7 +86,7 @@ func (r cacheInMemory) SaveItem(cacheKey CacheKey, newVal any) {
 	r.Set(cacheKey, list)
 }
 
-func (r cacheInMemory) Remove(cacheKey CacheKey, cacheId string) {
+func (r cacheInMemory) Remove(cacheKey cache.CacheKey, cacheId string) {
 	var list = r.Get(cacheKey)
 	if list.Count() == 0 {
 		return
@@ -95,7 +96,7 @@ func (r cacheInMemory) Remove(cacheKey CacheKey, cacheId string) {
 	r.Set(cacheKey, list)
 }
 
-func (r cacheInMemory) Clear(cacheKey CacheKey) {
+func (r cacheInMemory) Clear(cacheKey cache.CacheKey) {
 	var list = r.Get(cacheKey)
 	if list.Count() > 0 {
 		list.Clear()
@@ -104,11 +105,11 @@ func (r cacheInMemory) Clear(cacheKey CacheKey) {
 	delete(localCache, cacheKey.Key)
 }
 
-func (r cacheInMemory) Count(cacheKey CacheKey) int {
+func (r cacheInMemory) Count(cacheKey cache.CacheKey) int {
 	return r.Get(cacheKey).Count()
 }
 
-func (r cacheInMemory) ExistsItem(cacheKey CacheKey, cacheId string) bool {
+func (r cacheInMemory) ExistsItem(cacheKey cache.CacheKey, cacheId string) bool {
 	var list = r.Get(cacheKey)
 	if list.Count() == 0 {
 		return false
@@ -124,7 +125,7 @@ func (r cacheInMemory) ExistsItem(cacheKey CacheKey, cacheId string) bool {
 	return false
 }
 
-func (r cacheInMemory) ExistsKey(cacheKey CacheKey) bool {
+func (r cacheInMemory) ExistsKey(cacheKey cache.CacheKey) bool {
 	_, ok := localCache[cacheKey.Key]
 	return ok
 }
