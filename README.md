@@ -3,4 +3,4 @@
 
 实现了`cache.ICache`接口，并通过`container`注册到`IOC`
 
-如果你需要开启本地缓存，则需要在`startupModule`中依赖`memoryCache.Module`模块
+如果你需要开启本地缓存，则需要在`startupModule`中依赖`cacheMemory.Module`模块

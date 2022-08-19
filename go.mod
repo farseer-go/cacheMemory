@@ -1,4 +1,4 @@
-module github.com/farseer-go/memoryCache
+module github.com/farseer-go/cacheMemory
 
 go 1.19
 

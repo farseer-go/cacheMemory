@@ -1,4 +1,4 @@
-package memoryCache
+package cacheMemory
 
 import (
 	"github.com/farseer-go/cache"
