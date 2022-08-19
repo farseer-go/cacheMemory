@@ -11,13 +11,15 @@ type cacheInMemory struct {
 }
 
 // localCache 缓存的存储
-var localCache map[string]cacheValue
+var localCache map[string]*cacheValue
 
 type cacheValue struct {
 	// 缓存的数据
 	data any
 	// 缓存失效时间
 	ttl int64
+	// 失效后，拿到chan通知
+	ttlAfter <-chan time.Time
 }
 
 func newCacheInMemory() cache.ICache {
@@ -45,7 +47,7 @@ func (r cacheInMemory) GetItem(cacheKey cache.CacheKey, cacheId string) any {
 }
 
 func (r cacheInMemory) Set(cacheKey cache.CacheKey, val collections.ListAny) {
-	localCache[cacheKey.Key] = cacheValue{
+	localCache[cacheKey.Key] = &cacheValue{
 		data: val,
 	}
 
@@ -55,7 +57,22 @@ func (r cacheInMemory) Set(cacheKey cache.CacheKey, val collections.ListAny) {
 			return
 		}
 		value.ttl = time.Now().Add(cacheKey.MemoryExpiry).UnixMicro()
-		localCache[cacheKey.Key] = value
+		value.ttlAfter = time.After(cacheKey.MemoryExpiry)
+		//localCache[cacheKey.Key] = value
+
+		// ttl到期后，自动删除缓存
+		go r.ttl(cacheKey)()
+	}
+}
+
+// ttl到期后，自动删除缓存
+func (r cacheInMemory) ttl(cacheKey cache.CacheKey) func() {
+	return func() {
+		select {
+		case <-localCache[cacheKey.Key].ttlAfter:
+			delete(localCache, cacheKey.Key)
+			break
+		}
 	}
 }
 

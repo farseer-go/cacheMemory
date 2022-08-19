@@ -14,7 +14,7 @@ func (module Module) DependsModule() []modules.FarseerModule {
 }
 
 func (module Module) PreInitialize() {
-	localCache = make(map[string]cacheValue)
+	localCache = make(map[string]*cacheValue)
 	container.Use[cache.ICache](func() cache.ICache { return newCacheInMemory() }).Name("memory").Register()
 }
 
@@ -22,7 +22,6 @@ func (module Module) Initialize() {
 }
 
 func (module Module) PostInitialize() {
-	go checkTtl()
 }
 
 func (module Module) Shutdown() {

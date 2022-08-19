@@ -6,14 +6,17 @@ import (
 	"github.com/farseer-go/fs/modules"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
+
+type po struct {
+	Name string
+	Age  int
+}
 
 func TestCacheKey_Set(t *testing.T) {
 	modules.StartModules(Module{})
-	type po struct {
-		Name string
-		Age  int
-	}
+
 	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	lst := collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
@@ -30,10 +33,6 @@ func TestCacheKey_Set(t *testing.T) {
 
 func TestCacheKey_GetItem(t *testing.T) {
 	modules.StartModules(Module{})
-	type po struct {
-		Name string
-		Age  int
-	}
 	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	cacheManage.Set(collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19}))
@@ -50,10 +49,6 @@ func TestCacheKey_GetItem(t *testing.T) {
 
 func TestCacheKey_SaveItem(t *testing.T) {
 	modules.StartModules(Module{})
-	type po struct {
-		Name string
-		Age  int
-	}
 	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	cacheManage.Set(collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19}))
@@ -71,10 +66,6 @@ func TestCacheKey_SaveItem(t *testing.T) {
 
 func TestCacheKey_Remove(t *testing.T) {
 	modules.StartModules(Module{})
-	type po struct {
-		Name string
-		Age  int
-	}
 	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	cacheManage.Set(collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19}))
@@ -90,10 +81,6 @@ func TestCacheKey_Remove(t *testing.T) {
 
 func TestCacheKey_Clear(t *testing.T) {
 	modules.StartModules(Module{})
-	type po struct {
-		Name string
-		Age  int
-	}
 	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	cacheManage.Set(collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19}))
@@ -104,13 +91,25 @@ func TestCacheKey_Clear(t *testing.T) {
 
 func TestCacheKey_Exists(t *testing.T) {
 	modules.StartModules(Module{})
-	type po struct {
-		Name string
-		Age  int
-	}
 	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	assert.False(t, cacheManage.Exists())
 	cacheManage.Set(collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19}))
 	assert.True(t, cacheManage.Exists())
+}
+
+func TestCacheKey_Ttl(t *testing.T) {
+	modules.StartModules(Module{})
+	cache.SetProfilesInMemory[po]("test", "Name", 10*time.Millisecond)
+	cacheManage := cache.GetCacheManage[po]("test")
+	lst := collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
+	cacheManage.Set(lst)
+	lst2 := cacheManage.Get()
+	assert.Equal(t, lst.Count(), lst2.Count())
+	for i := 0; i < lst.Count(); i++ {
+		assert.Equal(t, lst.Index(i).Name, lst2.Index(i).Name)
+		assert.Equal(t, lst.Index(i).Age, lst2.Index(i).Age)
+	}
+	time.Sleep(12 * time.Millisecond)
+	assert.False(t, cacheManage.Exists())
 }
