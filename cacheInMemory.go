@@ -58,7 +58,6 @@ func (r cacheInMemory) Set(cacheKey cache.CacheKey, val collections.ListAny) {
 		}
 		value.ttl = time.Now().Add(cacheKey.MemoryExpiry).UnixMicro()
 		value.ttlAfter = time.After(cacheKey.MemoryExpiry)
-		//localCache[cacheKey.Key] = value
 
 		// ttl到期后，自动删除缓存
 		go r.ttl(cacheKey)()
