@@ -3,7 +3,7 @@ package cacheMemory
 import (
 	"github.com/farseer-go/cache"
 	"github.com/farseer-go/collections"
-	"github.com/farseer-go/fs/modules"
+	"github.com/farseer-go/fs"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -15,9 +15,9 @@ type po struct {
 }
 
 func TestCacheInMemory_Set(t *testing.T) {
-	modules.StartModules(Module{})
+	fs.Initialize[Module]("unit test")
 
-	cache.SetProfilesInMemory[po]("test", "Name", 0)
+	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	lst := collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.Set(lst.ToArray()...)
@@ -32,8 +32,8 @@ func TestCacheInMemory_Set(t *testing.T) {
 }
 
 func TestCacheInMemory_GetItem(t *testing.T) {
-	modules.StartModules(Module{})
-	cache.SetProfilesInMemory[po]("test", "Name", 0)
+	fs.Initialize[Module]("unit test")
+	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	item1, _ := cacheManage.GetItem("steden")
@@ -48,8 +48,8 @@ func TestCacheInMemory_GetItem(t *testing.T) {
 }
 
 func TestCacheInMemory_SaveItem(t *testing.T) {
-	modules.StartModules(Module{})
-	cache.SetProfilesInMemory[po]("test", "Name", 0)
+	fs.Initialize[Module]("unit test")
+	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.SaveItem(po{Name: "steden", Age: 99})
@@ -65,8 +65,8 @@ func TestCacheInMemory_SaveItem(t *testing.T) {
 }
 
 func TestCacheInMemory_Remove(t *testing.T) {
-	modules.StartModules(Module{})
-	cache.SetProfilesInMemory[po]("test", "Name", 0)
+	fs.Initialize[Module]("unit test")
+	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.Remove("steden")
@@ -80,8 +80,8 @@ func TestCacheInMemory_Remove(t *testing.T) {
 }
 
 func TestCacheInMemory_Clear(t *testing.T) {
-	modules.StartModules(Module{})
-	cache.SetProfilesInMemory[po]("test", "Name", 0)
+	fs.Initialize[Module]("unit test")
+	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	assert.Equal(t, cacheManage.Count(), 2)
@@ -90,8 +90,8 @@ func TestCacheInMemory_Clear(t *testing.T) {
 }
 
 func TestCacheInMemory_Exists(t *testing.T) {
-	modules.StartModules(Module{})
-	cache.SetProfilesInMemory[po]("test", "Name", 0)
+	fs.Initialize[Module]("unit test")
+	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	assert.False(t, cacheManage.Exists())
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
@@ -99,8 +99,8 @@ func TestCacheInMemory_Exists(t *testing.T) {
 }
 
 func TestCacheInMemory_Ttl(t *testing.T) {
-	modules.StartModules(Module{})
-	cache.SetProfilesInMemory[po]("test", "Name", 10*time.Millisecond)
+	fs.Initialize[Module]("unit test")
+	cache.SetProfilesInMemory[po]("test", "ClientName", 10*time.Millisecond)
 	cacheManage := cache.GetCacheManage[po]("test")
 	lst := collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.Set(lst.ToArray()...)
