@@ -70,7 +70,6 @@ func (r cacheInMemory) ttl(cacheKey cache.CacheKey) func() {
 		select {
 		case <-localCache[cacheKey.Key].ttlAfter:
 			delete(localCache, cacheKey.Key)
-			break
 		}
 	}
 }
