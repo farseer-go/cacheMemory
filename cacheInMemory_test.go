@@ -17,10 +17,20 @@ type po struct {
 func TestCacheInMemory_Set(t *testing.T) {
 	fs.Initialize[Module]("unit test")
 
-	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
+	assert.Panics(t, func() {
+		cache.SetProfilesInMemory[po]("test", "ClientName", 0)
+	})
+	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
+
+	lstEmpty := cacheManage.Get()
+	assert.Equal(t, 0, lstEmpty.Count())
+
+	assert.False(t, cacheManage.ExistsItem("steden"))
 	lst := collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.Set(lst.ToArray()...)
+	assert.True(t, cacheManage.ExistsItem("steden"))
+	assert.False(t, cacheManage.ExistsItem("steden3"))
 	lst2 := cacheManage.Get()
 
 	assert.Equal(t, lst.Count(), lst2.Count())
@@ -33,7 +43,7 @@ func TestCacheInMemory_Set(t *testing.T) {
 
 func TestCacheInMemory_GetItem(t *testing.T) {
 	fs.Initialize[Module]("unit test")
-	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
+	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	item1, _ := cacheManage.GetItem("steden")
@@ -49,8 +59,14 @@ func TestCacheInMemory_GetItem(t *testing.T) {
 
 func TestCacheInMemory_SaveItem(t *testing.T) {
 	fs.Initialize[Module]("unit test")
-	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
+	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
+
+	cacheManage.SaveItem(po{Name: "steden3", Age: 121})
+	item0, _ := cacheManage.GetItem("steden3")
+	assert.Equal(t, item0.Name, "steden3")
+	assert.Equal(t, item0.Age, 121)
+
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.SaveItem(po{Name: "steden", Age: 99})
 	item1, _ := cacheManage.GetItem("steden")
@@ -66,7 +82,7 @@ func TestCacheInMemory_SaveItem(t *testing.T) {
 
 func TestCacheInMemory_Remove(t *testing.T) {
 	fs.Initialize[Module]("unit test")
-	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
+	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.Remove("steden")
@@ -81,7 +97,7 @@ func TestCacheInMemory_Remove(t *testing.T) {
 
 func TestCacheInMemory_Clear(t *testing.T) {
 	fs.Initialize[Module]("unit test")
-	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
+	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	assert.Equal(t, cacheManage.Count(), 2)
@@ -91,16 +107,16 @@ func TestCacheInMemory_Clear(t *testing.T) {
 
 func TestCacheInMemory_Exists(t *testing.T) {
 	fs.Initialize[Module]("unit test")
-	cache.SetProfilesInMemory[po]("test", "ClientName", 0)
+	cache.SetProfilesInMemory[po]("test", "Name", 0)
 	cacheManage := cache.GetCacheManage[po]("test")
-	assert.False(t, cacheManage.Exists())
+	assert.False(t, cacheManage.ExistsKey())
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
-	assert.True(t, cacheManage.Exists())
+	assert.True(t, cacheManage.ExistsKey())
 }
 
 func TestCacheInMemory_Ttl(t *testing.T) {
 	fs.Initialize[Module]("unit test")
-	cache.SetProfilesInMemory[po]("test", "ClientName", 10*time.Millisecond)
+	cache.SetProfilesInMemory[po]("test", "Name", 10*time.Millisecond)
 	cacheManage := cache.GetCacheManage[po]("test")
 	lst := collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.Set(lst.ToArray()...)
@@ -111,5 +127,5 @@ func TestCacheInMemory_Ttl(t *testing.T) {
 		assert.Equal(t, lst.Index(i).Age, lst2.Index(i).Age)
 	}
 	time.Sleep(12 * time.Millisecond)
-	assert.False(t, cacheManage.Exists())
+	assert.False(t, cacheManage.ExistsKey())
 }

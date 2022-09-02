@@ -52,10 +52,7 @@ func (r cacheInMemory) Set(cacheKey cache.CacheKey, val collections.ListAny) {
 	}
 
 	if cacheKey.MemoryExpiry > 0 {
-		value, ok := localCache[cacheKey.Key]
-		if !ok {
-			return
-		}
+		value, _ := localCache[cacheKey.Key]
 		value.ttl = time.Now().Add(cacheKey.MemoryExpiry).UnixMilli()
 		value.ttlAfter = time.After(cacheKey.MemoryExpiry)
 
@@ -76,25 +73,28 @@ func (r cacheInMemory) ttl(cacheKey cache.CacheKey) func() {
 
 func (r cacheInMemory) SaveItem(cacheKey cache.CacheKey, newVal any) {
 	var list = r.Get(cacheKey)
-	if list.Count() == 0 {
-		return
-	}
+	//if list.Count() == 0 {
+	//	return
+	//}
 
 	// CacheKey.DataKey=null，说明实际缓存的是单个对象。所以此处直接替换新的对象即可，而不用查找。
-	if cacheKey.UniqueField == "" {
-		list.Clear()
-	} else {
-		// 从新对象中，获取唯一标识
-		newValDataKey := cacheKey.GetUniqueId(newVal)
-		for index := 0; index < list.Count(); index++ {
-			// 从当前缓存item中，获取唯一标识
-			itemDataKey := cacheKey.GetUniqueId(list.Index(index))
-			// 找到了
-			if itemDataKey == newValDataKey {
-				list.Set(index, newVal)
-				return
-			}
+	//if cacheKey.UniqueField == "" {
+	//	list.Clear()
+	//} else {
+	// 从新对象中，获取唯一标识
+	newValDataKey := cacheKey.GetUniqueId(newVal)
+	for index := 0; index < list.Count(); index++ {
+		// 从当前缓存item中，获取唯一标识
+		itemDataKey := cacheKey.GetUniqueId(list.Index(index))
+		// 找到了
+		if itemDataKey == newValDataKey {
+			list.Set(index, newVal)
+			return
 		}
+	}
+	//}
+	if list.Count() == 0 {
+		list = collections.NewListAny()
 	}
 	list.Add(newVal)
 	// 保存
@@ -103,12 +103,11 @@ func (r cacheInMemory) SaveItem(cacheKey cache.CacheKey, newVal any) {
 
 func (r cacheInMemory) Remove(cacheKey cache.CacheKey, cacheId string) {
 	var list = r.Get(cacheKey)
-	if list.Count() == 0 {
-		return
+	if list.Count() > 0 {
+		list.RemoveAll(func(item any) bool { return cacheKey.GetUniqueId(item) == cacheId })
+		// 保存
+		r.Set(cacheKey, list)
 	}
-	list.RemoveAll(func(item any) bool { return cacheKey.GetUniqueId(item) == cacheId })
-	// 保存
-	r.Set(cacheKey, list)
 }
 
 func (r cacheInMemory) Clear(cacheKey cache.CacheKey) {
