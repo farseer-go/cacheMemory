@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/farseer-go/cache v0.1.0
 	github.com/farseer-go/collections v0.2.0
-	github.com/farseer-go/fs v0.3.0
+	github.com/farseer-go/fs v0.4.0
 )
 
 require (
