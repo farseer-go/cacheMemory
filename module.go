@@ -15,7 +15,7 @@ func (module Module) DependsModule() []modules.FarseerModule {
 
 func (module Module) PreInitialize() {
 	localCache = make(map[string]*cacheValue)
-	container.Use[cache.ICache](func() cache.ICache { return newCacheInMemory() }).Name("memory").Register()
+	container.Register(func() cache.ICache { return newCacheInMemory() }, "memory")
 }
 
 func (module Module) Initialize() {
