@@ -77,7 +77,7 @@ func (r cacheInMemory) SaveItem(cacheKey cache.CacheKey, newVal any) {
 	//	return
 	//}
 
-	// CacheKey.DataKey=null，说明实际缓存的是单个对象。所以此处直接替换新的对象即可，而不用查找。
+	// cacheKey.DataKey=null，说明实际缓存的是单个对象。所以此处直接替换新的对象即可，而不用查找。
 	//if cacheKey.UniqueField == "" {
 	//	list.Clear()
 	//} else {
