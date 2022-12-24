@@ -3,6 +3,7 @@ package cacheMemory
 import (
 	"github.com/farseer-go/cache"
 	"github.com/farseer-go/collections"
+	"sync"
 	"time"
 )
 
@@ -12,6 +13,9 @@ type cacheInMemory struct {
 
 // localCache 缓存的存储
 var localCache map[string]*cacheValue
+
+// 缓存锁
+var lock sync.RWMutex
 
 type cacheValue struct {
 	// 缓存的数据
@@ -28,6 +32,8 @@ func newCacheInMemory() cache.ICache {
 
 func (r cacheInMemory) Get(cacheKey cache.CacheKey) collections.ListAny {
 	var defValue collections.ListAny
+	lock.RLock()
+	defer lock.RUnlock()
 	value, ok := localCache[cacheKey.Key]
 	if !ok {
 		return defValue
@@ -47,12 +53,14 @@ func (r cacheInMemory) GetItem(cacheKey cache.CacheKey, cacheId string) any {
 }
 
 func (r cacheInMemory) Set(cacheKey cache.CacheKey, val collections.ListAny) {
+	lock.Lock()
+	defer lock.Unlock()
 	localCache[cacheKey.Key] = &cacheValue{
 		data: val,
 	}
 
 	if cacheKey.MemoryExpiry > 0 {
-		value, _ := localCache[cacheKey.Key]
+		value := localCache[cacheKey.Key]
 		value.ttl = time.Now().Add(cacheKey.MemoryExpiry).UnixMilli()
 		value.ttlAfter = time.After(cacheKey.MemoryExpiry)
 
@@ -64,23 +72,23 @@ func (r cacheInMemory) Set(cacheKey cache.CacheKey, val collections.ListAny) {
 // ttl到期后，自动删除缓存
 func (r cacheInMemory) ttl(cacheKey cache.CacheKey) func() {
 	return func() {
-		select {
-		case <-localCache[cacheKey.Key].ttlAfter:
-			delete(localCache, cacheKey.Key)
-		}
+		<-localCache[cacheKey.Key].ttlAfter
+		lock.Lock()
+		defer lock.Unlock()
+		delete(localCache, cacheKey.Key)
 	}
 }
 
 func (r cacheInMemory) SaveItem(cacheKey cache.CacheKey, newVal any) {
 	var list = r.Get(cacheKey)
-	//if list.Count() == 0 {
+	// if list.Count() == 0 {
 	//	return
-	//}
+	// }
 
 	// cacheKey.DataKey=null，说明实际缓存的是单个对象。所以此处直接替换新的对象即可，而不用查找。
-	//if cacheKey.UniqueField == "" {
+	// if cacheKey.UniqueField == "" {
 	//	list.Clear()
-	//} else {
+	// } else {
 	// 从新对象中，获取唯一标识
 	newValDataKey := cacheKey.GetUniqueId(newVal)
 	for index := 0; index < list.Count(); index++ {
@@ -92,7 +100,7 @@ func (r cacheInMemory) SaveItem(cacheKey cache.CacheKey, newVal any) {
 			return
 		}
 	}
-	//}
+	// }
 	if list.Count() == 0 {
 		list = collections.NewListAny()
 	}
@@ -140,6 +148,8 @@ func (r cacheInMemory) ExistsItem(cacheKey cache.CacheKey, cacheId string) bool 
 }
 
 func (r cacheInMemory) ExistsKey(cacheKey cache.CacheKey) bool {
+	lock.RLock()
+	defer lock.RUnlock()
 	_, ok := localCache[cacheKey.Key]
 	return ok
 }
