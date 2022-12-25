@@ -3,7 +3,7 @@ module github.com/farseer-go/cacheMemory
 go 1.19
 
 require (
-	github.com/farseer-go/cache v0.1.1
+	github.com/farseer-go/cache v0.1.2-0.20221223083352-e4bca1c31b9c
 	github.com/farseer-go/collections v0.2.1
 	github.com/farseer-go/fs v0.4.1
 	github.com/stretchr/testify v1.8.1
