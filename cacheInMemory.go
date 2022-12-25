@@ -32,8 +32,6 @@ func newCacheInMemory() cache.ICache {
 
 func (r cacheInMemory) Get(cacheKey cache.CacheKey) collections.ListAny {
 	var defValue collections.ListAny
-	lock.RLock()
-	defer lock.RUnlock()
 	value, ok := localCache[cacheKey.Key]
 	if !ok {
 		return defValue
