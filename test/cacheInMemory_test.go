@@ -58,6 +58,25 @@ func TestCacheInMemory_GetItem(t *testing.T) {
 	fs.Initialize[cacheMemory.Module]("unit test")
 	cacheMemory.SetProfiles[po]("test", "Name", 0)
 	cacheManage := container.Resolve[cache.ICacheManage[po]]("test")
+	cacheManage.SetItemSource(func(cacheId any) (po, bool) {
+		if cacheId == "laoLi" {
+			return po{Name: "laoLi"}, true
+		}
+		return po{}, false
+	})
+	cacheManage.SetListSource(func() collections.List[po] {
+		return collections.NewList(po{Name: "xiaoLi"})
+	})
+	cacheManage.EnableItemNullToLoadALl()
+
+	item, b := cacheManage.GetItem("laoLi")
+	assert.Equal(t, "laoLi", item.Name)
+	assert.True(t, b)
+
+	item, b = cacheManage.GetItem("xiaoLi")
+	assert.Equal(t, "xiaoLi", item.Name)
+	assert.True(t, b)
+
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	item1, _ := cacheManage.GetItem("steden")
 
