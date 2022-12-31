@@ -9,27 +9,16 @@ import (
 	"time"
 )
 
-// localCache 缓存的存储
-var localCache map[string]*cacheValue
-
-// 缓存锁
-var lock sync.RWMutex
-
-type cacheValue struct {
-	// 缓存的数据
-	data any
-	// 缓存失效时间
-	ttl int64
-	// 失效后，拿到chan通知
-	ttlAfter <-chan time.Time
-}
-
 // 二级缓存-本地缓存操作
 type cacheInMemory struct {
-	expiry      time.Duration // 设置Memory缓存过期时间
-	uniqueField string        // hash中的主键（唯一ID的字段名称）
-	itemType    reflect.Type  // itemType
-	key         string        // 缓存KEY
+	expiry      time.Duration       // 设置Memory缓存过期时间
+	uniqueField string              // hash中的主键（唯一ID的字段名称）
+	itemType    reflect.Type        // itemType
+	key         string              // 缓存KEY
+	lock        *sync.RWMutex       // 锁
+	data        collections.ListAny // 缓存的数据
+	ttlExpiry   int64               // 缓存失效时间
+	ttlAfter    <-chan time.Time    // 失效后，拿到chan通知
 }
 
 // 创建实例
@@ -39,16 +28,15 @@ func newCache(key string, uniqueField string, itemType reflect.Type, expiry time
 		uniqueField: uniqueField,
 		itemType:    itemType,
 		key:         key,
+		lock:        &sync.RWMutex{},
 	}
 }
 
 func (r *cacheInMemory) Get() collections.ListAny {
-	var defValue collections.ListAny
-	value, ok := localCache[r.key]
-	if !ok {
-		return defValue
-	}
-	return value.data.(collections.ListAny)
+	r.lock.RLock()
+	defer r.lock.RUnlock()
+
+	return r.data
 }
 
 func (r *cacheInMemory) GetItem(cacheId string) any {
@@ -63,16 +51,13 @@ func (r *cacheInMemory) GetItem(cacheId string) any {
 }
 
 func (r *cacheInMemory) Set(val collections.ListAny) {
-	lock.Lock()
-	defer lock.Unlock()
-	localCache[r.key] = &cacheValue{
-		data: val,
-	}
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	r.data = val
 
 	if r.expiry > 0 {
-		value := localCache[r.key]
-		value.ttl = time.Now().Add(r.expiry).UnixMilli()
-		value.ttlAfter = time.After(r.expiry)
+		r.ttlExpiry = time.Now().Add(r.expiry).UnixMilli()
+		r.ttlAfter = time.After(r.expiry)
 
 		// ttl到期后，自动删除缓存
 		go r.ttl()()
@@ -82,23 +67,16 @@ func (r *cacheInMemory) Set(val collections.ListAny) {
 // ttl到期后，自动删除缓存
 func (r *cacheInMemory) ttl() func() {
 	return func() {
-		<-localCache[r.key].ttlAfter
-		lock.Lock()
-		defer lock.Unlock()
-		delete(localCache, r.key)
+		<-r.ttlAfter
+		r.lock.Lock()
+		defer r.lock.Unlock()
+
+		r.data = collections.ListAny{}
 	}
 }
 
 func (r *cacheInMemory) SaveItem(newVal any) {
 	var list = r.Get()
-	// if list.Count() == 0 {
-	//	return
-	// }
-
-	// cacheKey.DataKey=null，说明实际缓存的是单个对象。所以此处直接替换新的对象即可，而不用查找。
-	// if cacheKey.uniqueField == "" {
-	//	list.Clear()
-	// } else {
 	// 从新对象中，获取唯一标识
 	newValDataKey := r.GetUniqueId(newVal)
 	for index := 0; index < list.Count(); index++ {
@@ -110,11 +88,12 @@ func (r *cacheInMemory) SaveItem(newVal any) {
 			return
 		}
 	}
-	// }
+
 	if list.Count() == 0 {
 		list = collections.NewListAny()
 	}
 	list.Add(newVal)
+
 	// 保存
 	r.Set(list)
 }
@@ -123,8 +102,6 @@ func (r *cacheInMemory) Remove(cacheId string) {
 	var list = r.Get()
 	if list.Count() > 0 {
 		list.RemoveAll(func(item any) bool { return r.GetUniqueId(item) == cacheId })
-		// 保存
-		r.Set(list)
 	}
 }
 
@@ -134,7 +111,7 @@ func (r *cacheInMemory) Clear() {
 		list.Clear()
 		r.Set(list)
 	}
-	delete(localCache, r.key)
+	r.data = collections.ListAny{}
 }
 
 func (r *cacheInMemory) Count() int {
@@ -158,10 +135,9 @@ func (r *cacheInMemory) ExistsItem(cacheId string) bool {
 }
 
 func (r *cacheInMemory) ExistsKey() bool {
-	lock.RLock()
-	defer lock.RUnlock()
-	_, ok := localCache[r.key]
-	return ok
+	r.lock.RLock()
+	defer r.lock.RUnlock()
+	return !r.data.IsNil()
 }
 
 // GetUniqueId 获取唯一字段数据

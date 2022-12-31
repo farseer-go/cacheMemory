@@ -13,7 +13,7 @@ func (module Module) DependsModule() []modules.FarseerModule {
 }
 
 func (module Module) PreInitialize() {
-	localCache = make(map[string]*cacheValue)
+	//localCache = make(map[string]*cacheValue)
 }
 
 func (module Module) Initialize() {
