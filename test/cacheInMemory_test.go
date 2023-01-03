@@ -34,7 +34,7 @@ func TestCacheInMemory_Set(t *testing.T) {
 	cacheManage.SetItemSource(func(cacheId any) (po, bool) {
 		return po{}, false
 	})
-	cacheManage.EnableItemNullToLoadALl()
+	cacheManage.EnableItemNullToLoadAll()
 
 	lstEmpty := cacheManage.Get()
 	assert.Equal(t, 0, lstEmpty.Count())
@@ -67,7 +67,7 @@ func TestCacheInMemory_GetItem(t *testing.T) {
 	cacheManage.SetListSource(func() collections.List[po] {
 		return collections.NewList(po{Name: "xiaoLi"})
 	})
-	cacheManage.EnableItemNullToLoadALl()
+	cacheManage.EnableItemNullToLoadAll()
 
 	item, b := cacheManage.GetItem("laoLi")
 	assert.Equal(t, "laoLi", item.Name)
