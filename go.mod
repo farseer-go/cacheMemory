@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/farseer-go/cache v0.1.2-0.20230101175341-73f77ea2ea1a
 	github.com/farseer-go/collections v0.3.1-0.20221231211338-1daefcb932a1
-	github.com/farseer-go/fs v0.5.1-0.20230110171817-fc1b7d29b9f4
+	github.com/farseer-go/fs v0.6.0
 	github.com/stretchr/testify v1.8.1
 )
 
