@@ -18,7 +18,6 @@ type cacheInMemory struct {
 	lock        *sync.RWMutex       // 锁
 	data        collections.ListAny // 缓存的数据
 	ttlExpiry   int64               // 缓存失效时间
-	ttlAfter    <-chan time.Time    // 失效后，拿到chan通知
 }
 
 // 创建实例
@@ -57,17 +56,16 @@ func (r *cacheInMemory) Set(val collections.ListAny) {
 
 	if r.expiry > 0 {
 		r.ttlExpiry = time.Now().Add(r.expiry).UnixMilli()
-		r.ttlAfter = time.After(r.expiry)
-
+		
 		// ttl到期后，自动删除缓存
-		go r.ttl()()
+		go r.ttl(r.expiry)()
 	}
 }
 
 // ttl到期后，自动删除缓存
-func (r *cacheInMemory) ttl() func() {
+func (r *cacheInMemory) ttl(expiry time.Duration) func() {
 	return func() {
-		<-r.ttlAfter
+		<-time.After(expiry)
 		r.lock.Lock()
 		defer r.lock.Unlock()
 

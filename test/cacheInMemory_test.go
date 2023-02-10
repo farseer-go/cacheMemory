@@ -6,6 +6,7 @@ import (
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/fs"
 	"github.com/farseer-go/fs/container"
+	"github.com/farseer-go/fs/flog"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -34,6 +35,13 @@ func TestCacheInMemory_Set(t *testing.T) {
 	cacheManage.SetItemSource(func(cacheId any) (po, bool) {
 		return po{}, false
 	})
+	lstDb := collections.NewDictionary[string, po]()
+	cacheManage.SetSyncSource(10*time.Millisecond, func(val po) {
+		if !lstDb.ContainsKey(val.Name) {
+			lstDb.Add(val.Name, val)
+			flog.Info(val.Name)
+		}
+	})
 	cacheManage.EnableItemNullToLoadAll()
 
 	lstEmpty := cacheManage.Get()
@@ -52,6 +60,10 @@ func TestCacheInMemory_Set(t *testing.T) {
 		assert.Equal(t, lst.Index(i).Name, lst2.Index(i).Name)
 		assert.Equal(t, lst.Index(i).Age, lst2.Index(i).Age)
 	}
+
+	time.Sleep(20 * time.Millisecond)
+	assert.True(t, lstDb.ContainsKey("steden"))
+	assert.True(t, lstDb.ContainsKey("steden2"))
 }
 
 func TestCacheInMemory_GetItem(t *testing.T) {
