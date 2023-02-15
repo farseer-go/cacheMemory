@@ -38,7 +38,7 @@ func (r *cacheInMemory) Get() collections.ListAny {
 	return r.data
 }
 
-func (r *cacheInMemory) GetItem(cacheId string) any {
+func (r *cacheInMemory) GetItem(cacheId any) any {
 	lst := r.Get()
 	for _, item := range lst.ToArray() {
 		id := r.GetUniqueId(item)
@@ -56,7 +56,7 @@ func (r *cacheInMemory) Set(val collections.ListAny) {
 
 	if r.expiry > 0 {
 		r.ttlExpiry = time.Now().Add(r.expiry).UnixMilli()
-		
+
 		// ttl到期后，自动删除缓存
 		go r.ttl(r.expiry)()
 	}
@@ -96,7 +96,7 @@ func (r *cacheInMemory) SaveItem(newVal any) {
 	r.Set(list)
 }
 
-func (r *cacheInMemory) Remove(cacheId string) {
+func (r *cacheInMemory) Remove(cacheId any) {
 	var list = r.Get()
 	if list.Count() > 0 {
 		list.RemoveAll(func(item any) bool { return r.GetUniqueId(item) == cacheId })
@@ -116,7 +116,7 @@ func (r *cacheInMemory) Count() int {
 	return r.Get().Count()
 }
 
-func (r *cacheInMemory) ExistsItem(cacheId string) bool {
+func (r *cacheInMemory) ExistsItem(cacheId any) bool {
 	var list = r.Get()
 	if list.Count() == 0 {
 		return false
