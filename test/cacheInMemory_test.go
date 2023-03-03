@@ -17,18 +17,56 @@ type po struct {
 	Age  int
 }
 
-func TestCacheInMemory_Set(t *testing.T) {
+func init() {
 	fs.Initialize[cacheMemory.Module]("unit test")
+}
 
+func TestCacheInMemory_GetItem(t *testing.T) {
+	cacheMemory.SetProfiles[po]("test1", "Name", 0)
+	cacheManage := container.Resolve[cache.ICacheManage[po]]("test1")
+	cacheManage.SetItemSource(func(cacheId any) (po, bool) {
+		if cacheId == "laoLi" {
+			return po{Name: "laoLi"}, true
+		}
+		return po{}, false
+	})
+	cacheManage.SetListSource(func() collections.List[po] {
+		return collections.NewList(po{Name: "xiaoLi"})
+	})
+	cacheManage.EnableItemNullToLoadAll()
+
+	item, b := cacheManage.GetItem("laoLi")
+	assert.Equal(t, "laoLi", item.Name)
+	assert.True(t, b)
+
+	item, b = cacheManage.GetItem("xiaoLi")
+	assert.Equal(t, "xiaoLi", item.Name)
+	assert.True(t, b)
+
+	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
+	item1, _ := cacheManage.GetItem("steden")
+
+	assert.Equal(t, item1.Name, "steden")
+	assert.Equal(t, item1.Age, 18)
+
+	item2, _ := cacheManage.GetItem("steden2")
+
+	assert.Equal(t, item2.Name, "steden2")
+	assert.Equal(t, item2.Age, 19)
+
+	cacheManage.Single()
+}
+
+func TestCacheInMemory_Set(t *testing.T) {
+	cacheMemory.SetProfiles[po]("test2", "Name", 0)
 	assert.Panics(t, func() {
-		cacheMemory.SetProfiles[po]("test", "", 0)
+		cacheMemory.SetProfiles[po]("test2", "", 0)
 	})
 
 	assert.Panics(t, func() {
-		cacheMemory.SetProfiles[po]("test", "ClientName", 0)
+		cacheMemory.SetProfiles[po]("test2", "ClientName", 0)
 	})
-	cacheMemory.SetProfiles[po]("test", "Name", 0)
-	cacheManage := container.Resolve[cache.ICacheManage[po]]("test")
+	cacheManage := container.Resolve[cache.ICacheManage[po]]("test2")
 	cacheManage.SetListSource(func() collections.List[po] {
 		return collections.NewList[po]()
 	})
@@ -66,47 +104,9 @@ func TestCacheInMemory_Set(t *testing.T) {
 	assert.True(t, lstDb.ContainsKey("steden2"))
 }
 
-func TestCacheInMemory_GetItem(t *testing.T) {
-	fs.Initialize[cacheMemory.Module]("unit test")
-	cacheMemory.SetProfiles[po]("test", "Name", 0)
-	cacheManage := container.Resolve[cache.ICacheManage[po]]("test")
-	cacheManage.SetItemSource(func(cacheId any) (po, bool) {
-		if cacheId == "laoLi" {
-			return po{Name: "laoLi"}, true
-		}
-		return po{}, false
-	})
-	cacheManage.SetListSource(func() collections.List[po] {
-		return collections.NewList(po{Name: "xiaoLi"})
-	})
-	cacheManage.EnableItemNullToLoadAll()
-
-	item, b := cacheManage.GetItem("laoLi")
-	assert.Equal(t, "laoLi", item.Name)
-	assert.True(t, b)
-
-	item, b = cacheManage.GetItem("xiaoLi")
-	assert.Equal(t, "xiaoLi", item.Name)
-	assert.True(t, b)
-
-	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
-	item1, _ := cacheManage.GetItem("steden")
-
-	assert.Equal(t, item1.Name, "steden")
-	assert.Equal(t, item1.Age, 18)
-
-	item2, _ := cacheManage.GetItem("steden2")
-
-	assert.Equal(t, item2.Name, "steden2")
-	assert.Equal(t, item2.Age, 19)
-
-	cacheManage.Single()
-}
-
 func TestCacheInMemory_SaveItem(t *testing.T) {
-	fs.Initialize[cacheMemory.Module]("unit test")
-	cacheMemory.SetProfiles[po]("test", "Name", 0)
-	cacheManage := container.Resolve[cache.ICacheManage[po]]("test")
+	cacheMemory.SetProfiles[po]("test3", "Name", 0)
+	cacheManage := container.Resolve[cache.ICacheManage[po]]("test3")
 
 	cacheManage.SaveItem(po{Name: "steden3", Age: 121})
 	item0, _ := cacheManage.GetItem("steden3")
@@ -127,9 +127,8 @@ func TestCacheInMemory_SaveItem(t *testing.T) {
 }
 
 func TestCacheInMemory_Remove(t *testing.T) {
-	fs.Initialize[cacheMemory.Module]("unit test")
-	cacheMemory.SetProfiles[po]("test", "Name", 0)
-	cacheManage := container.Resolve[cache.ICacheManage[po]]("test")
+	cacheMemory.SetProfiles[po]("test4", "Name", 0)
+	cacheManage := container.Resolve[cache.ICacheManage[po]]("test4")
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.Remove("steden")
 
@@ -142,9 +141,8 @@ func TestCacheInMemory_Remove(t *testing.T) {
 }
 
 func TestCacheInMemory_Clear(t *testing.T) {
-	fs.Initialize[cacheMemory.Module]("unit test")
-	cacheMemory.SetProfiles[po]("test", "Name", 0)
-	cacheManage := container.Resolve[cache.ICacheManage[po]]("test")
+	cacheMemory.SetProfiles[po]("test5", "Name", 0)
+	cacheManage := container.Resolve[cache.ICacheManage[po]]("test5")
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	assert.Equal(t, cacheManage.Count(), 2)
 	cacheManage.Clear()
@@ -152,18 +150,16 @@ func TestCacheInMemory_Clear(t *testing.T) {
 }
 
 func TestCacheInMemory_Exists(t *testing.T) {
-	fs.Initialize[cacheMemory.Module]("unit test")
-	cacheMemory.SetProfiles[po]("test", "Name", 0)
-	cacheManage := container.Resolve[cache.ICacheManage[po]]("test")
+	cacheMemory.SetProfiles[po]("test6", "Name", 0)
+	cacheManage := container.Resolve[cache.ICacheManage[po]]("test6")
 	assert.False(t, cacheManage.ExistsKey())
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	assert.True(t, cacheManage.ExistsKey())
 }
 
 func TestCacheInMemory_Ttl(t *testing.T) {
-	fs.Initialize[cacheMemory.Module]("unit test")
-	cacheMemory.SetProfiles[po]("test", "Name", 10*time.Millisecond)
-	cacheManage := container.Resolve[cache.ICacheManage[po]]("test")
+	cacheMemory.SetProfiles[po]("test7", "Name", 10*time.Millisecond)
+	cacheManage := container.Resolve[cache.ICacheManage[po]]("test7")
 	lst := collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.Set(lst.ToArray()...)
 	lst2 := cacheManage.Get()
