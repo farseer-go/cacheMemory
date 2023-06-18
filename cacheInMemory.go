@@ -22,13 +22,22 @@ type cacheInMemory struct {
 
 // 创建实例
 func newCache(key string, uniqueField string, itemType reflect.Type, expiry time.Duration) cache.ICache {
-	return &cacheInMemory{
+	r := &cacheInMemory{
 		expiry:      expiry,
 		uniqueField: uniqueField,
 		itemType:    itemType,
 		key:         key,
 		lock:        &sync.RWMutex{},
 	}
+
+	if expiry > 0 {
+		r.ttlExpiry = time.Now().Add(expiry).UnixMilli()
+		// ttl到期后，自动删除缓存
+	}
+
+	// 加入到TTL检查列表中
+	checkList.Add(r)
+	return r
 }
 
 func (r *cacheInMemory) Get() collections.ListAny {
@@ -53,24 +62,6 @@ func (r *cacheInMemory) Set(val collections.ListAny) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	r.data = val
-
-	if r.expiry > 0 {
-		r.ttlExpiry = time.Now().Add(r.expiry).UnixMilli()
-
-		// ttl到期后，自动删除缓存
-		go r.ttl(r.expiry)()
-	}
-}
-
-// ttl到期后，自动删除缓存
-func (r *cacheInMemory) ttl(expiry time.Duration) func() {
-	return func() {
-		<-time.After(expiry)
-		r.lock.Lock()
-		defer r.lock.Unlock()
-
-		r.data = collections.ListAny{}
-	}
 }
 
 func (r *cacheInMemory) SaveItem(newVal any) {
@@ -104,12 +95,9 @@ func (r *cacheInMemory) Remove(cacheId any) {
 }
 
 func (r *cacheInMemory) Clear() {
-	var list = r.Get()
-	if list.Count() > 0 {
-		list.Clear()
-		r.Set(list)
+	if r.data.Count() > 0 {
+		r.data.Clear()
 	}
-	r.data = collections.ListAny{}
 }
 
 func (r *cacheInMemory) Count() int {
@@ -138,7 +126,6 @@ func (r *cacheInMemory) ExistsKey() bool {
 	return !r.data.IsNil()
 }
 
-// GetUniqueId 获取唯一字段数据
 func (r *cacheInMemory) GetUniqueId(item any) string {
 	val := reflect.ValueOf(item).FieldByName(r.uniqueField).Interface()
 	return parse.Convert(val, "")

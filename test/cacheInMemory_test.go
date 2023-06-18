@@ -168,6 +168,6 @@ func TestCacheInMemory_Ttl(t *testing.T) {
 		assert.Equal(t, lst.Index(i).Name, lst2.Index(i).Name)
 		assert.Equal(t, lst.Index(i).Age, lst2.Index(i).Age)
 	}
-	time.Sleep(15 * time.Millisecond)
+	time.Sleep(300 * time.Millisecond)
 	assert.False(t, cacheManage.ExistsKey())
 }
