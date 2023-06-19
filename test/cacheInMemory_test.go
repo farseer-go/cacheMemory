@@ -2,6 +2,7 @@ package test
 
 import (
 	"github.com/farseer-go/cache"
+	"github.com/farseer-go/cache/eumExpiryType"
 	"github.com/farseer-go/cacheMemory"
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/fs"
@@ -22,7 +23,9 @@ func init() {
 }
 
 func TestCacheInMemory_GetItem(t *testing.T) {
-	cacheMemory.SetProfiles[po]("test1", "Name", 0)
+
+	cacheMemory.SetProfiles[po]("test1", "Name")
+
 	cacheManage := container.Resolve[cache.ICacheManage[po]]("test1")
 	cacheManage.SetItemSource(func(cacheId any) (po, bool) {
 		if cacheId == "laoLi" {
@@ -58,13 +61,13 @@ func TestCacheInMemory_GetItem(t *testing.T) {
 }
 
 func TestCacheInMemory_Set(t *testing.T) {
-	cacheMemory.SetProfiles[po]("test2", "Name", 0)
+	cacheMemory.SetProfiles[po]("test2", "Name")
 	assert.Panics(t, func() {
-		cacheMemory.SetProfiles[po]("test2", "", 0)
+		cacheMemory.SetProfiles[po]("test2", "")
 	})
 
 	assert.Panics(t, func() {
-		cacheMemory.SetProfiles[po]("test2", "ClientName", 0)
+		cacheMemory.SetProfiles[po]("test2", "ClientName")
 	})
 	cacheManage := container.Resolve[cache.ICacheManage[po]]("test2")
 	cacheManage.SetListSource(func() collections.List[po] {
@@ -105,7 +108,7 @@ func TestCacheInMemory_Set(t *testing.T) {
 }
 
 func TestCacheInMemory_SaveItem(t *testing.T) {
-	cacheMemory.SetProfiles[po]("test3", "Name", 0)
+	cacheMemory.SetProfiles[po]("test3", "Name")
 	cacheManage := container.Resolve[cache.ICacheManage[po]]("test3")
 
 	cacheManage.SaveItem(po{Name: "steden3", Age: 121})
@@ -127,7 +130,7 @@ func TestCacheInMemory_SaveItem(t *testing.T) {
 }
 
 func TestCacheInMemory_Remove(t *testing.T) {
-	cacheMemory.SetProfiles[po]("test4", "Name", 0)
+	cacheMemory.SetProfiles[po]("test4", "Name")
 	cacheManage := container.Resolve[cache.ICacheManage[po]]("test4")
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.Remove("steden")
@@ -141,7 +144,7 @@ func TestCacheInMemory_Remove(t *testing.T) {
 }
 
 func TestCacheInMemory_Clear(t *testing.T) {
-	cacheMemory.SetProfiles[po]("test5", "Name", 0)
+	cacheMemory.SetProfiles[po]("test5", "Name")
 	cacheManage := container.Resolve[cache.ICacheManage[po]]("test5")
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	assert.Equal(t, cacheManage.Count(), 2)
@@ -150,7 +153,7 @@ func TestCacheInMemory_Clear(t *testing.T) {
 }
 
 func TestCacheInMemory_Exists(t *testing.T) {
-	cacheMemory.SetProfiles[po]("test6", "Name", 0)
+	cacheMemory.SetProfiles[po]("test6", "Name")
 	cacheManage := container.Resolve[cache.ICacheManage[po]]("test6")
 	assert.False(t, cacheManage.ExistsKey())
 	cacheManage.Set(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
@@ -158,7 +161,11 @@ func TestCacheInMemory_Exists(t *testing.T) {
 }
 
 func TestCacheInMemory_Ttl(t *testing.T) {
-	cacheMemory.SetProfiles[po]("test7", "Name", 10*time.Millisecond)
+	cacheMemory.SetProfiles[po]("test7", "Name", func(op *cache.Op) {
+		op.ExpiryType = eumExpiryType.SlidingExpiration
+		op.Expiry = 200 * time.Millisecond
+	})
+	
 	cacheManage := container.Resolve[cache.ICacheManage[po]]("test7")
 	lst := collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.Set(lst.ToArray()...)
@@ -168,6 +175,10 @@ func TestCacheInMemory_Ttl(t *testing.T) {
 		assert.Equal(t, lst.Index(i).Name, lst2.Index(i).Name)
 		assert.Equal(t, lst.Index(i).Age, lst2.Index(i).Age)
 	}
+	time.Sleep(100 * time.Millisecond)
+	cacheManage.Get()
+	time.Sleep(150 * time.Millisecond)
+	assert.True(t, cacheManage.ExistsKey())
 	time.Sleep(300 * time.Millisecond)
 	assert.False(t, cacheManage.ExistsKey())
 }
