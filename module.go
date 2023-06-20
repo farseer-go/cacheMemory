@@ -11,7 +11,3 @@ type Module struct {
 func (module Module) DependsModule() []modules.FarseerModule {
 	return []modules.FarseerModule{cache.Module{}}
 }
-
-func (module Module) PostInitialize() {
-	go checkTTL()
-}

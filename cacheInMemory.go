@@ -19,7 +19,7 @@ type cacheInMemory struct {
 	key         string              // 缓存KEY
 	lock        *sync.RWMutex       // 锁
 	data        collections.ListAny // 缓存的数据
-	ttlExpiry   int64               // 缓存失效时间
+	lastVisitAt time.Time           // 最后一次访问时间
 }
 
 // 创建实例
@@ -36,14 +36,13 @@ func newCache(key string, uniqueField string, itemType reflect.Type, ops ...cach
 		itemType:    itemType,
 		key:         key,
 		lock:        &sync.RWMutex{},
+		lastVisitAt: time.Now(),
 	}
 
-	if r.expiry > 0 {
-		r.ttlExpiry = time.Now().Add(r.expiry).UnixMilli()
+	if r.expiry > 0 && r.expiryType == eumExpiryType.SlidingExpiration {
+		go r.updateTtl()
 	}
 
-	// 加入到TTL检查列表中
-	checkList.Add(r)
 	return r
 }
 
@@ -145,6 +144,31 @@ func (r *cacheInMemory) GetUniqueId(item any) string {
 // 更新缓存过期时间
 func (r *cacheInMemory) updateExpiry() {
 	if r.expiry > 0 && r.expiryType == eumExpiryType.SlidingExpiration {
-		r.ttlExpiry = time.Now().Add(r.expiry).UnixMilli()
+		r.lastVisitAt = time.Now()
+	}
+}
+
+// TTL时间到期后没有访问数据，则移除缓存数据
+func (r *cacheInMemory) updateTtl() {
+	expiry := r.expiry
+	if r.expiry >= 2*time.Second {
+		expiry = r.expiry - time.Second
+	} else if r.expiry >= time.Second {
+		expiry = r.expiry - 500*time.Millisecond
+	} else if r.expiry >= 500*time.Millisecond {
+		expiry = r.expiry - 100*time.Millisecond
+	}
+
+	ticker := time.NewTicker(expiry)
+	for range ticker.C {
+		if time.Now().Sub(r.lastVisitAt) > r.expiry {
+			// 重新计算下一次的失效时间
+			r.lastVisitAt = time.Time{}
+			r.lock.Lock()
+			r.Clear()
+			// 不能使用NewListAny，因为需要data = nil
+			r.data = collections.ListAny{}
+			r.lock.Unlock()
+		}
 	}
 }
