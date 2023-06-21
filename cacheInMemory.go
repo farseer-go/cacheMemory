@@ -150,18 +150,9 @@ func (r *cacheInMemory) updateExpiry() {
 
 // TTL时间到期后没有访问数据，则移除缓存数据
 func (r *cacheInMemory) updateTtl() {
-	expiry := r.expiry
-	if r.expiry >= 2*time.Second {
-		expiry = r.expiry - time.Second
-	} else if r.expiry >= time.Second {
-		expiry = r.expiry - 500*time.Millisecond
-	} else if r.expiry >= 500*time.Millisecond {
-		expiry = r.expiry - 100*time.Millisecond
-	}
-
-	ticker := time.NewTicker(expiry)
+	ticker := time.NewTicker(r.expiry)
 	for range ticker.C {
-		if time.Now().Sub(r.lastVisitAt) > r.expiry {
+		if r.expiryType == eumExpiryType.AbsoluteExpiration || time.Now().Sub(r.lastVisitAt) > r.expiry {
 			// 重新计算下一次的失效时间
 			r.lastVisitAt = time.Time{}
 			r.lock.Lock()
