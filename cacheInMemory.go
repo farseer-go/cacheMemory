@@ -39,7 +39,7 @@ func newCache(key string, uniqueField string, itemType reflect.Type, ops ...cach
 		lastVisitAt: time.Now(),
 	}
 
-	if r.expiry > 0 && r.expiryType == eumExpiryType.SlidingExpiration {
+	if r.expiry > 0 {
 		go r.updateTtl()
 	}
 
