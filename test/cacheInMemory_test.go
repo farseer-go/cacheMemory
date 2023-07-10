@@ -165,7 +165,7 @@ func TestCacheInMemory_Ttl(t *testing.T) {
 		op.ExpiryType = eumExpiryType.SlidingExpiration
 		op.Expiry = 200 * time.Millisecond
 	})
-	
+
 	cacheManage := container.Resolve[cache.ICacheManage[po]]("test7")
 	lst := collections.NewList(po{Name: "steden", Age: 18}, po{Name: "steden2", Age: 19})
 	cacheManage.Set(lst.ToArray()...)
