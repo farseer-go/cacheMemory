@@ -2,7 +2,6 @@ package test
 
 import (
 	"github.com/farseer-go/cache"
-	"github.com/farseer-go/cache/eumExpiryType"
 	"github.com/farseer-go/cacheMemory"
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/fs"
@@ -162,8 +161,7 @@ func TestCacheInMemory_Exists(t *testing.T) {
 
 func TestCacheInMemory_Ttl(t *testing.T) {
 	cacheMemory.SetProfiles[po]("test7", "Name", func(op *cache.Op) {
-		op.ExpiryType = eumExpiryType.SlidingExpiration
-		op.Expiry = 200 * time.Millisecond
+		op.SlidingExpiration(200 * time.Millisecond)
 	})
 
 	cacheManage := container.Resolve[cache.ICacheManage[po]]("test7")
