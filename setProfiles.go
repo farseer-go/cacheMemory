@@ -2,7 +2,7 @@ package cacheMemory
 
 import (
 	"github.com/farseer-go/cache"
-	"github.com/farseer-go/fs/exception"
+	"github.com/farseer-go/fs/flog"
 	"reflect"
 )
 
@@ -12,13 +12,13 @@ import (
 // ops：选项
 func SetProfiles[TEntity any](key string, uniqueField string, ops ...cache.Option) cache.ICacheManage[TEntity] {
 	if uniqueField == "" {
-		exception.ThrowRefuseException("缓存集合数据时，需要设置UniqueField字段")
+		flog.Panicf("cacheMemory.SetProfiles：缓存集合数据时，需要设置UniqueField字段")
 	}
 	var entity TEntity
 	entityType := reflect.TypeOf(entity)
 	_, isExists := entityType.FieldByName(uniqueField)
 	if !isExists {
-		exception.ThrowRefuseException(uniqueField + "字段，在缓存集合中不存在")
+		flog.Panicf("cacheMemory.SetProfiles：%s字段，在缓存集合中不存在", uniqueField)
 	}
 
 	cacheIns := newCache(key, uniqueField, entityType, ops...)
