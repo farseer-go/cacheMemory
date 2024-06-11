@@ -1,6 +1,6 @@
 module github.com/farseer-go/cacheMemory
 
-go 1.19
+go 1.21
 
 toolchain go1.22.0
 
@@ -13,7 +13,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/farseer-go/mapper v0.13.0 // indirect
+	github.com/farseer-go/mapper v0.14.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
