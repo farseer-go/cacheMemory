@@ -12,6 +12,7 @@ require (
 )
 
 exclude github.com/timandy/routine v1.1.3
+
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/farseer-go/mapper v0.14.0 // indirect
