@@ -13,7 +13,10 @@ func NewCache[T any]() CacheList[T] {
 // SetIfNotExists 写入缓存，如果Key不存在
 func (receiver *CacheList[T]) SetIfNotExists(key string, getItem func() *T) {
 	if _, isExists := receiver.items[key]; !isExists {
-		receiver.items[key] = getItem()
+		item := getItem()
+		if item != nil {
+			receiver.items[key] = item
+		}
 	}
 }
 
