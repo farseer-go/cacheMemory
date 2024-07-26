@@ -57,12 +57,29 @@ func (r *cacheInMemory) Get() collections.ListAny {
 func (r *cacheInMemory) GetItem(cacheId any) any {
 	lst := r.Get()
 	for _, item := range lst.ToArray() {
-		id := r.GetUniqueId(item)
-		if cacheId == id {
+		if cacheId == r.GetUniqueId(item) {
 			return item
 		}
 	}
 	return nil
+}
+
+func (r *cacheInMemory) GetItems(cacheIds []any) collections.ListAny {
+	keys := collections.NewList[string]()
+	for _, cacheId := range cacheIds {
+		keys.Add(parse.ToString(cacheId))
+	}
+
+	lst := r.Get()
+	items := collections.NewListAny()
+
+	for _, item := range lst.ToArray() {
+		id := r.GetUniqueId(item)
+		if keys.Contains(id) {
+			items.Add(item)
+		}
+	}
+	return items
 }
 
 func (r *cacheInMemory) Set(val collections.ListAny) {
