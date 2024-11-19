@@ -1,13 +1,14 @@
 package cacheMemory
 
 import (
+	"reflect"
+	"sync"
+	"time"
+
 	"github.com/farseer-go/cache"
 	"github.com/farseer-go/cache/eumExpiryType"
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/fs/parse"
-	"reflect"
-	"sync"
-	"time"
 )
 
 // 二级缓存-本地缓存操作
@@ -170,9 +171,9 @@ func (r *cacheInMemory) updateTtl() {
 	ticker := time.NewTicker(r.expiry)
 	for range ticker.C {
 		if r.expiryType == eumExpiryType.AbsoluteExpiration || time.Now().Sub(r.lastVisitAt) > r.expiry {
+			r.lock.Lock()
 			// 重新计算下一次的失效时间
 			r.lastVisitAt = time.Time{}
-			r.lock.Lock()
 			r.Clear()
 			// 不能使用NewListAny，因为需要data = nil
 			r.data = collections.ListAny{}
